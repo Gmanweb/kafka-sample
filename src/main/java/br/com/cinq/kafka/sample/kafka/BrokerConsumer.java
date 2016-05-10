@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -25,7 +26,7 @@ import br.com.cinq.kafka.sample.Consumer;
 @Qualifier("sampleConsumer")
 public class BrokerConsumer implements Consumer, DisposableBean, InitializingBean {
 
-	static Logger logger = LoggerFactory.getLogger(BrokerConsumer.class);
+    static Logger logger = LoggerFactory.getLogger(BrokerConsumer.class);
 
     public static String TXID = "txid";
 
@@ -81,19 +82,19 @@ public class BrokerConsumer implements Consumer, DisposableBean, InitializingBea
     }
 
     /**
-    * Start to receive messages
-    */
+     * Start to receive messages
+     */
     public void start() {
 
-    	logger.info("Connecting to {}", getBootstrapServer());
-    	logger.info("Auto Commit set to {}", getEnableAutoCommit());
+        logger.info("Connecting to {}", getBootstrapServer());
+        logger.info("Auto Commit set to {}", getEnableAutoCommit());
 
         Properties props = new Properties();
         props.put("bootstrap.servers", getBootstrapServer());
         props.put("group.id", getGroupId());
         props.put("enable.auto.commit", getEnableAutoCommit());
-        if(getEnableAutoCommit())
-        	props.put("auto.commit.interval.ms", getAutoCommitInterval());
+        if (getEnableAutoCommit())
+            props.put("auto.commit.interval.ms", getAutoCommitInterval());
         props.put("session.timeout.ms", getSessionTimeout());
         props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
@@ -102,10 +103,10 @@ public class BrokerConsumer implements Consumer, DisposableBean, InitializingBea
 
         for (int i = 0; i < getPartitions(); i++) {
             KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
-            consumer.subscribe(Arrays.asList(getTopic() + "-" + i));
+            // consumer.subscribe(Arrays.asList(getTopic() + "-" + i));
 
-            //         TopicPartition partition = new TopicPartition(getTopic(), i);
-            //         consumer.assign(Arrays.asList(partition));
+            TopicPartition partition = new TopicPartition(getTopic(), i);
+            consumer.assign(Arrays.asList(partition));
 
             BrokerConsumerClient client = new BrokerConsumerClient();
             client.setEnableAutoCommit(getEnableAutoCommit());
@@ -175,8 +176,8 @@ public class BrokerConsumer implements Consumer, DisposableBean, InitializingBea
         this.sessionTimeout = sessionTimeout;
     }
 
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		start();
-	}
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        start();
+    }
 }

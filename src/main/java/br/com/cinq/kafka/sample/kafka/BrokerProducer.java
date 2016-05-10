@@ -54,8 +54,8 @@ public class BrokerProducer implements Producer {
     private KafkaProducer<String, String> producer = null;
 
     /**
-    * Send the message. The message must be serialized as string
-    */
+     * Send the message. The message must be serialized as string
+     */
     @Override
     public void send(String message) throws QueueException {
         producer = getProducer();
@@ -63,7 +63,8 @@ public class BrokerProducer implements Producer {
         try {
             logger.info("Sending message {} to [{}]", getTopic() + "-" + roundRobinCount, message);
 
-            producer.send(new ProducerRecord<String, String>(getTopic() + "-" + roundRobinCount, message)).get();
+            producer.send(new ProducerRecord<String, String>(getTopic(), roundRobinCount, null, message)).get();
+            // producer.send(new ProducerRecord<String, String>(getTopic() + "-" + roundRobinCount, message)).get();
         } catch (InterruptedException | ExecutionException e) {
             logger.warn("Kafka Producer [{}]", e.getMessage(), e);
         }
@@ -78,7 +79,7 @@ public class BrokerProducer implements Producer {
     private KafkaProducer<String, String> getProducer() {
         if (producer == null) {
 
-        	logger.info("Connecting to {}", getBootstrapServer());
+            logger.info("Connecting to {}", getBootstrapServer());
 
             Properties props = new Properties();
             props.put("bootstrap.servers", getBootstrapServer());
@@ -89,6 +90,8 @@ public class BrokerProducer implements Producer {
             props.put("buffer.memory", getBufferMemory());
             props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
             props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+            props.put("partitioner.class","br.com.cinq.kafka.sample.kafka.BrokerProducerPartitioner");
+            props.put("num.partitions", getPartitions());
 
             producer = new KafkaProducer<>(props);
         }
